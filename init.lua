@@ -204,6 +204,9 @@ vim.keymap.set('n', '<C-b><RIGHT>', '<C-w><C-l>', { desc = 'Move focus to the ri
 vim.keymap.set('n', '<C-b><DOWN>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
 vim.keymap.set('n', '<C-b><UP>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 
+vim.keymap.set('n', '<Tab>', ':tabnext<CR>', { desc = 'Move to next tab' })
+vim.keymap.set('n', '<S-Tab>', ':tabprevious<CR>', { desc = 'Move to previouse tab' })
+
 -- NOTE: Some terminals have colliding keymaps or are not able to send distinct keycodes
 -- vim.keymap.set("n", "<C-S-h>", "<C-w>H", { desc = "Move window to the left" })
 -- vim.keymap.set("n", "<C-S-l>", "<C-w>L", { desc = "Move window to the right" })
@@ -506,13 +509,22 @@ require('lazy').setup({
       -- Automatically install LSPs and related tools to stdpath for Neovim
       -- Mason must be loaded before its dependents so we need to set it up here.
       -- NOTE: `opts = {}` is the same as calling `require('mason').setup({})`
-      { 'mason-org/mason.nvim', opts = {
-        ensure_installed = {
-          'clangd',
-          'clang-format',
-          'codellb',
+      {
+        'mason-org/mason.nvim',
+        opts = {
+          ensure_installed = {
+            'clangd',
+            'clang-format',
+            'codellb',
+            'basedpyright',
+            'debugpy',
+            'ruff',
+            'gopls',
+            'delve',
+            'templ',
+          },
         },
-      } },
+      },
       { 'mason-org/mason-lspconfig.nvim' },
       'WhoIsSethDaniel/mason-tool-installer.nvim',
       -- 'nvim-java/nvim-java', -- this is somewhat not working
@@ -705,7 +717,6 @@ require('lazy').setup({
       --  - settings (table): Override the default settings passed when initializing the server.
       --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
       local servers = {
-        -- gopls = {},
         -- pyright = {},
         -- rust_analyzer = {},
         -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
@@ -731,6 +742,9 @@ require('lazy').setup({
             },
           },
         },
+        gopls = {},
+        templ = {},
+        basedpyright = {},
       }
 
       -- require('java').setup {
@@ -780,6 +794,7 @@ require('lazy').setup({
       for server_name, server_config in pairs(servers) do
         server_config.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server_config.capabilities or {})
         vim.lsp.config(server_name, server_config)
+        vim.lsp.enable(server_name)
         --require('lspconfig')[server_name].setup(server_config)
       end
 
@@ -801,6 +816,13 @@ require('lazy').setup({
         'stylua', -- Used to format Lua code
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
+
+      vim.api.nvim_create_autocmd('BufWritePost', {
+        pattern = '*.templ',
+        callback = function(args)
+          vim.system({ 'templ', 'generate', args.file }, { detach = true })
+        end,
+      })
     end,
   },
 
@@ -838,6 +860,7 @@ require('lazy').setup({
         lua = { 'stylua' },
         java = { 'google-java-format' },
         cpp = { 'clang-format' },
+        go = { 'gofmt' },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
         --
@@ -992,17 +1015,17 @@ require('lazy').setup({
       -- Simple and easy statusline.
       --  You could remove this setup call if you don't like it,
       --  and try some other statusline plugin
-      local statusline = require 'mini.statusline'
+      -- local statusline = require 'mini.statusline'
       -- set use_icons to true if you have a Nerd Font
-      statusline.setup { use_icons = vim.g.have_nerd_font }
+      -- statusline.setup { use_icons = vim.g.have_nerd_font }
 
       -- You can configure sections in the statusline by overriding their
       -- default behavior. For example, here we set the section for
       -- cursor location to LINE:COLUMN
       ---@diagnostic disable-next-line: duplicate-set-field
-      statusline.section_location = function()
-        return '%2l:%-2v'
-      end
+      --statusline.section_location = function()
+      --return '%2l:%-2v'
+      --end
 
       -- ... and there is more!
       --  Check out: https://github.com/echasnovski/mini.nvim
@@ -1053,6 +1076,10 @@ require('lazy').setup({
 
   require 'custom.plugins.cmake_tools',
   require 'custom.plugins.spring_boot_tools',
+  require 'custom.plugins.claudecode',
+  require 'custom.plugins.lualine',
+  require 'custom.plugins.theprimageon-worktree',
+  require 'custom.plugins.orgmode',
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
   --    This is the easiest way to modularize your config.
   --
