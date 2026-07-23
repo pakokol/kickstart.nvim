@@ -155,7 +155,8 @@ return {
     ft = 'python',
     dependencies = { 'mfussenegger/nvim-dap' },
     config = function(_, opts)
-      local path = '~/.local/share/nvim/mason/packages/debugpy/venv/bin/python'
+      local venv = vim.fn.stdpath 'data' .. '/mason/packages/debugpy/venv'
+      local path = vim.fn.has 'win32' == 1 and venv .. '/Scripts/python.exe' or venv .. '/bin/python'
       require('dap-python').setup(path)
     end,
   },

@@ -12,7 +12,7 @@ return {
           local venv_python = require('venv-selector').get_active_venv()
           if venv_python then
             require('dap-python').resolve_python = function()
-              return venv_python .. '/bin/python'
+              return venv_python .. (vim.fn.has 'win32' == 1 and '/Scripts/python.exe' or '/bin/python')
             end
           end
         end,

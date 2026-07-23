@@ -1,5 +1,7 @@
-local home = os.getenv 'HOME'
-local workspace_path = home .. '/.local/share/nvim/jdtls-workspace/'
+local data_dir = vim.fn.stdpath 'data' -- OS-aware: ~/.local/share/nvim on unix, ~/AppData/Local/nvim-data on windows
+local jdtls_dir = data_dir .. '/mason/packages/jdtls'
+local config_os = vim.fn.has 'win32' == 1 and 'config_win' or (vim.fn.has 'mac' == 1 and 'config_mac' or 'config_linux')
+local workspace_path = data_dir .. '/jdtls-workspace/'
 local project_name = vim.fn.fnamemodify(vim.fn.getcwd(), ':p:h:t')
 local workspace_dir = workspace_path .. project_name
 
@@ -10,13 +12,13 @@ end
 local extendedClientCapabilities = jdtls.extendedClientCapabilities
 
 -- This part is for running the debugger
+local config_dir = vim.fn.stdpath 'config' -- OS-aware nvim config dir
 local bundles = {
-  vim.fn.glob '~/.config/nvim/java-debug/com.microsoft.java.debug.plugin/target/com.microsoft.java.debug.plugin-*.jar',
+  vim.fn.glob(config_dir .. '/java-debug/com.microsoft.java.debug.plugin/target/com.microsoft.java.debug.plugin-*.jar'),
 }
 
 -- Extend the debuuger bundles with the test bundles
--- vim.list_extend(bundles, vim.split(vim.fn.glob '~/.config/nvim/vscode-java-test/server/*.jar', '\n'))
-local java_test_bundles = vim.split(vim.fn.glob('~/.config/nvim/vscode-java-test/server/*.jar', 1), '\n')
+local java_test_bundles = vim.split(vim.fn.glob(config_dir .. '/vscode-java-test/server/*.jar', 1), '\n')
 local excluded = {
   'com.microsoft.java.test.runner-jar-with-dependencies.jar',
   'jacocoagent.jar',
@@ -45,11 +47,11 @@ local config = {
     'java.base/java.util=ALL-UNNAMED',
     '--add-opens',
     'java.base/java.lang=ALL-UNNAMED',
-    '-javaagent:' .. home .. '/.local/share/nvim/mason/packages/jdtls/lombok.jar',
+    '-javaagent:' .. jdtls_dir .. '/lombok.jar',
     '-jar',
-    vim.fn.glob(home .. '/.local/share/nvim/mason/packages/jdtls/plugins/org.eclipse.equinox.launcher_*.jar'),
+    vim.fn.glob(jdtls_dir .. '/plugins/org.eclipse.equinox.launcher_*.jar'),
     '-configuration',
-    home .. '/.local/share/nvim/mason/packages/jdtls/config_mac',
+    jdtls_dir .. '/' .. config_os,
     '-data',
     workspace_dir,
   },
